@@ -1,5 +1,9 @@
 * text=auto eol=crlf
 
+# Workflows must stay LF so GitHub Actions registers them.
+.github/workflows/*.yml eol=lf
+.github/workflows/*.yaml eol=lf
+
 # Binary files must not be line-ending normalized.
 *.bin binary
 *.bmp binary
