@@ -1,0 +1,61 @@
+name: Build Asset Packer GUI
+
+on:
+  push:
+    paths:
+      - "tools/ampr_pack_gui.py"
+      - "tools/ampr_pack*.py"
+      - "tools/requirements-pack*.txt"
+      - ".github/workflows/build-packer-gui.yml"
+  pull_request:
+    paths:
+      - "tools/ampr_pack_gui.py"
+      - "tools/ampr_pack*.py"
+      - "tools/requirements-pack*.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-gui:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/requirements-pack.txt
+          pip install -r tools/requirements-pack-build.txt
+
+      - name: Build GUI executable with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name ampr_pack_gui tools/ampr_pack_gui.py
+
+      - name: Upload GUI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ampr_pack_gui-windows
+          path: dist/ampr_pack_gui.exe
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Create release on tag push
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/ampr_pack_gui.exe
+          draft: false
+          prerelease: false
